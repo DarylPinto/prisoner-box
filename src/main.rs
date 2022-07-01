@@ -5,7 +5,7 @@ use Strategy::{Smart, Random};
 const PRISONER_COUNT: usize = 100;
 const CUBES_TO_OPEN: usize = PRISONER_COUNT / 2;
 const SIMULATION_COUNT: usize = 10000;
-const STRATEGY: Strategy = Smart;
+const STRATEGY: Strategy = Random;
 const DEBUG: bool = false;
 
 enum Strategy {
@@ -36,16 +36,20 @@ fn attempt_random_strategy(rng: &mut ThreadRng) -> bool {
     // Each prisoner
     for i in 0..PRISONER_COUNT {
         // Checking 50 boxes
-        let mut cubes_for_this_prisoner = cubes.into_iter().collect::<Vec<_>>();
+        // let mut cubes_for_this_prisoner = cubes.into_iter().collect::<Vec<_>>();
+        let mut visited: [usize;CUBES_TO_OPEN] = [usize::MAX;CUBES_TO_OPEN];
         // log(format!("\nPrisoner #{i} steps into the room"));
         for j in 0..CUBES_TO_OPEN {
             // Deciding which box to open
-            let number_in_cube = cubes_for_this_prisoner.choose(rng).unwrap().clone();
+            let mut number_in_cube = cubes.choose(rng).unwrap();
+            while visited.contains(&number_in_cube) {
+                number_in_cube = cubes.choose(rng).unwrap();
+            }
             // log(format!(
             //     "Prisoner #{i}'s {j}th choice was a random box. The box contained {number_in_cube}"
             // ));
             // If the box has their number, then they succeed
-            if number_in_cube == i {
+            if number_in_cube == &i {
                 success_count += 1;
                 // log(format!(
                 //     "Prisoner #{i} found their number after opening {} boxes",
@@ -55,7 +59,8 @@ fn attempt_random_strategy(rng: &mut ThreadRng) -> bool {
                 break;
             }
             // If it doesn't have their number, make sure they won't try to open it again
-            cubes_for_this_prisoner.retain(|&number| number != number_in_cube);
+            // cubes_for_this_prisoner.retain(|&number| number != number_in_cube);
+            visited[j] = *number_in_cube;
             // println!("{:?}", cubes_for_this_prisoner);
         }
     }
