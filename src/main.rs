@@ -1,8 +1,9 @@
 use rand::prelude::*;
 use std::thread;
 
+// Configuration
 const PRISONER_COUNT: usize = 100;
-const SIMULATION_COUNT: usize = 10000;
+const SIMULATION_COUNT: usize = 1_000_000;
 
 const CUBES_TO_OPEN: usize = PRISONER_COUNT / 2;
 
@@ -17,65 +18,89 @@ fn place_cubes(rng: &mut ThreadRng) -> [usize; PRISONER_COUNT] {
 }
 
 /// Runs the simulation with the naive strategy
+/// Returns true if all prisoners find their number
 fn attempt_random_strategy(rng: &mut ThreadRng) -> bool {
     let cubes = place_cubes(rng);
     let mut success_count: usize = 0;
+
+    // For each prisoner
     for i in 0..PRISONER_COUNT {
+        // Keep track of which boxes they've opened (none to begin with)
         let mut visited: [usize; CUBES_TO_OPEN] = [usize::MAX; CUBES_TO_OPEN];
+
+        // Open 50 boxes
         for j in 0..CUBES_TO_OPEN {
+            // Randomly select a box that they haven't opened yet
             let mut number_in_cube = cubes.choose(rng).unwrap();
             while visited.contains(number_in_cube) {
                 number_in_cube = cubes.choose(rng).unwrap();
             }
+            // If they've found their number, they leave the room
             if number_in_cube == &i {
                 success_count += 1;
                 break;
             }
+            // If not, mark the box as opened
             visited[j] = *number_in_cube;
         }
     }
+
     success_count == PRISONER_COUNT
 }
 
 /// Runs the simulation with the smartest strategy
-fn attempt_smart_strategy(rng: &mut ThreadRng) -> bool {
+/// Returns true if all prisoners find their number
+fn attempt_loop_strategy(rng: &mut ThreadRng) -> bool {
     let cubes = place_cubes(rng);
     let mut success_count: usize = 0;
+
+    // For each prisoner
     for i in 0..PRISONER_COUNT {
+        // First box to open is the box that matches their number
         let mut decision = i;
         let first_decision = decision;
+        // Open 50 Boxes
         for _ in 0..CUBES_TO_OPEN {
+            // If they've found their number, they leave the room
             if cubes[decision] == i {
                 success_count += 1;
                 break;
             } else {
+                // If they didn't find their number, they go to the box pointed
+                // to by the slip within the one they just opened
                 decision = cubes[decision];
+                // If they close the loop, they leave the room
                 if decision == first_decision {
                     break;
                 }
             }
         }
     }
+
     success_count == PRISONER_COUNT
 }
 
 fn main() {
-    let smart_strategy = thread::spawn(|| {
+    // Run smart strategy in one thread
+    let loop_strategy = thread::spawn(|| {
         let mut rng = rand::thread_rng();
         let mut success_count = 0;
+
         for _ in 0..SIMULATION_COUNT {
-            if attempt_smart_strategy(&mut rng) {
+            if attempt_loop_strategy(&mut rng) {
                 success_count += 1;
             }
         }
 
         let rate = (success_count as f64) / (SIMULATION_COUNT as f64) * 100.;
-        println!("Smart Strategy Success rate: {rate}%");
+        println!("Loop strategy success rate: {rate}%");
     });
 
+    // Run naive strategy on another thread
     let random_strategy = thread::spawn(|| {
         let mut rng = rand::thread_rng();
         let mut success_count = 0;
+
         for _ in 0..SIMULATION_COUNT {
             if attempt_random_strategy(&mut rng) {
                 success_count += 1;
@@ -83,13 +108,13 @@ fn main() {
         }
 
         let rate = (success_count as f64) / (SIMULATION_COUNT as f64) * 100.;
-        println!("Random Success rate: {rate}%");
+        println!("Random strategy success rate: {rate}%");
     });
 
-    smart_strategy
+    // Wait for threads to finish
+    loop_strategy
         .join()
-        .expect("Failed to join on smart_stragety thread");
-
+        .expect("Failed to join on loop_stragety thread");
     random_strategy
         .join()
         .expect("Failed to join on smart_stragety thread");
