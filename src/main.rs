@@ -26,22 +26,21 @@ fn attempt_random_strategy(rng: &mut ThreadRng) -> bool {
     // For each prisoner
     for i in 0..PRISONER_COUNT {
         // Keep track of which boxes they've opened (none to begin with)
-        let mut visited: [usize; CUBES_TO_OPEN] = [usize::MAX; CUBES_TO_OPEN];
+        let mut cubes = cubes.clone();
+        let len = PRISONER_COUNT;
 
         // Open 50 boxes
         for j in 0..CUBES_TO_OPEN {
             // Randomly select a box that they haven't opened yet
-            let mut number_in_cube = cubes.choose(rng).unwrap();
-            while visited.contains(number_in_cube) {
-                number_in_cube = cubes.choose(rng).unwrap();
-            }
+            let idx = rng.gen_range(0..(len - j));
+            let number_in_cube = cubes[idx];
             // If they've found their number, they leave the room
-            if number_in_cube == &i {
+            if number_in_cube == i {
                 success_count += 1;
                 break;
             }
-            // If not, mark the box as opened
-            visited[j] = *number_in_cube;
+            // If not, mark the box as opened so it won't be randomly chosen again
+            cubes.swap(idx, len - j - 1);
         }
     }
 
