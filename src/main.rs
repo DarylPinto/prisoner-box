@@ -64,14 +64,13 @@ fn attempt_loop_strategy(rng: &mut ThreadRng) -> bool {
             if cubes[decision] == i {
                 success_count += 1;
                 break;
-            } else {
-                // If they didn't find their number, they go to the box pointed
-                // to by the slip within the one they just opened
-                decision = cubes[decision];
-                // If they close the loop, they leave the room
-                if decision == first_decision {
-                    break;
-                }
+            }
+            // If they didn't find their number, they go to the box pointed
+            // to by the slip within the one they just opened
+            decision = cubes[decision];
+            // If they close the loop, they leave the room
+            if decision == first_decision {
+                break;
             }
         }
     }
@@ -113,8 +112,8 @@ fn main() {
     // Wait for threads to finish
     loop_strategy
         .join()
-        .expect("Failed to join on loop_stragety thread");
+        .expect("Failed to join on loop_strategy thread");
     random_strategy
         .join()
-        .expect("Failed to join on smart_stragety thread");
+        .expect("Failed to join on smart_strategy thread");
 }
