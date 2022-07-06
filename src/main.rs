@@ -57,7 +57,6 @@ fn attempt_loop_strategy(rng: &mut ThreadRng) -> bool {
     for i in 0..PRISONER_COUNT {
         // First box to open is the box that matches their number
         let mut decision = i;
-        let first_decision = decision;
         // Open 50 Boxes
         for _ in 0..CUBES_TO_OPEN {
             // If they've found their number, they leave the room
@@ -68,10 +67,6 @@ fn attempt_loop_strategy(rng: &mut ThreadRng) -> bool {
             // If they didn't find their number, they go to the box pointed
             // to by the slip within the one they just opened
             decision = cubes[decision];
-            // If they close the loop, they leave the room
-            if decision == first_decision {
-                break;
-            }
         }
     }
 
